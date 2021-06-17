@@ -2,6 +2,7 @@
 
 namespace Icinga\Web\Widget\Dashboard;
 
+use Icinga\Exception\InvalidPropertyException;
 use Icinga\Web\Widget\Dashboard;
 use ipl\Web\Compat\CompatForm;
 use ipl\Web\Url;
@@ -49,7 +50,10 @@ class SettingSortBox extends CompatForm
     public function __get($name)
     {
         if (! property_exists($this, $name)) {
+            $class = get_class($this);
+            $message = "Access to undefined property $class::$name";
 
+            throw new InvalidPropertyException($message);
         }
 
         return $this->$name;

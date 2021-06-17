@@ -377,7 +377,7 @@ class HomeAndPaneForm extends CompatForm
                 // Remove the given home with it's panes and dashlets
                 $this->dashboard->removeHome($orgHome->getName());
 
-                if ($orgHome->getAttribute('owner')) {
+                if ($orgHome->getOwner() !== DashboardHome::DEFAULT_IW2_USER) {
                     Notification::success(sprintf(t('Dashboard home has been removed: "%s"'), $orgHome));
                 } else {
                     Notification::success(

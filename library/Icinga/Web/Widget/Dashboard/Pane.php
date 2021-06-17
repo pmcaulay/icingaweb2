@@ -17,7 +17,7 @@ class Pane implements UserWidget
     use Database;
 
     /** @var string A type for all panes provided by modules */
-    const PUBLIC = 'system';
+    const SYSTEM = 'system';
 
     /** @var string A type for user created panes */
     const PRIVATE = 'private';
@@ -354,16 +354,21 @@ class Pane implements UserWidget
      *
      * @return array
      */
-    public function getDashlets($ordered = true)
+    public function getDashlets($skipDisabled = false, $ordered = true)
     {
-        if ($ordered) {
-            $dashlets = $this->dashlets;
-            ksort($dashlets);
+        $dashlets = $this->dashlets;
 
-            return $dashlets;
+        if ($skipDisabled) {
+            $dashlets = array_filter($this->dashlets, function ($dashlet) {
+                return ! $dashlet->getDisabled();
+            });
         }
 
-        return $this->dashlets;
+        if ($ordered) {
+            ksort($dashlets);
+        }
+
+        return $dashlets;
     }
 
     /**

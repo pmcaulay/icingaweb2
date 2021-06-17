@@ -19,9 +19,9 @@ use ipl\Web\Widget\Tabs;
  * Dashboards display multiple views on a single page
  *
  * The terminology is as follows:
- * - Dashlet:     A single view showing a specific url
- * - Pane:          Aggregates one or more dashlets on one page, displays its title as a tab
- * - Dashboard:     Shows all panes
+ * - Dashlet:           A single view showing a specific url
+ * - Pane:              Aggregates one or more dashlets on one page, displays its title as a tab
+ * - Dashboard/Home:    Shows all panes belonging to this home
  *
  */
 class Dashboard extends BaseHtmlElement
@@ -100,7 +100,7 @@ class Dashboard extends BaseHtmlElement
     }
 
     /**
-     * Load Pane items provided by all enabled modules
+     * Load Home items and their dashboard panes
      *
      * @return  $this
      */
@@ -113,7 +113,7 @@ class Dashboard extends BaseHtmlElement
     }
 
     /**
-     * Load dashboards to a specific home
+     * Load dashboard panes belonging to a specific home
      *
      * @param string|null $home
      *
@@ -155,7 +155,7 @@ class Dashboard extends BaseHtmlElement
         } else {
             $homeParam = Url::fromRequest()->getParam('home');
 
-            if (empty($homeParam)) {
+            if (empty($homeParam) || ! $this->hasHome($homeParam)) {
                 // Was opened e.g from icingaweb2/search
                 $home = $this->rewindHomes();
 
@@ -177,7 +177,7 @@ class Dashboard extends BaseHtmlElement
     }
 
     /**
-     * Load dashboard home items from the navigation menu
+     * Load home items from the navigation menu
      */
     public function loadHomeItems()
     {
@@ -198,7 +198,7 @@ class Dashboard extends BaseHtmlElement
         $activeHome = $this->getActiveHome();
 
         if ($activeHome && $activeHome->getName() !== DashboardHome::DEFAULT_HOME) {
-            $url = Url::fromPath('dashboard/home')->getUrlWithout([DashboardHome::TAB_PARAM, $this->tabParam]);
+            $url = Url::fromPath(DashboardHome::URL_PATH)->getUrlWithout([DashboardHome::TAB_PARAM, $this->tabParam]);
             $url->addParams([DashboardHome::TAB_PARAM => $activeHome->getName()]);
         } else {
             $url = Url::fromPath('dashboard')->getUrlWithout($this->tabParam);
@@ -509,14 +509,9 @@ class Dashboard extends BaseHtmlElement
     public function assemble()
     {
         $activeHome = $this->getActiveHome();
-        $panes = array_filter($activeHome->getPanes(), function ($pane) {
-            return ! $pane->getDisabled();
-        });
 
-        if (! empty($panes)) {
-            $dashlets = array_filter($this->getActivePane()->getDashlets(), function ($dashlet) {
-                return ! $dashlet->getDisabled();
-            });
+        if ($activeHome && ! empty($activeHome->getPanes(true))) {
+            $dashlets = $this->getActivePane()->getDashlets(true);
 
             if (empty($dashlets)) {
                 $this->setAttribute('class', 'content');

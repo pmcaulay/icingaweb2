@@ -8,6 +8,7 @@ use Icinga\Exception\Http\HttpNotFoundException;
 use Icinga\Forms\Dashboard\AvailableDashlets;
 use Icinga\Forms\Dashboard\DashletForm;
 use Icinga\Forms\Dashboard\HomeAndPaneForm;
+use Icinga\Web\Navigation\DashboardHome;
 use Icinga\Web\Widget\Dashboard;
 use Icinga\Web\Widget\Tabextension\DashboardSettings;
 use ipl\Web\Compat\CompatController;
@@ -46,27 +47,21 @@ class DashboardsController extends CompatController
                 'url'       => Url::fromRequest()
             ]);
         } else {
-            $panes = array_filter($activeHome->getPanes(), function ($pane) {
-                return ! $pane->getDisabled();
-            });
-
-            if (empty($panes)) {
+            if (empty($activeHome->getPanes(true))) {
                 $this->getTabs()->add('dashboard', [
                     'active'    => true,
                     'title'     => $this->translate('Dashboard'),
                     'url'       => Url::fromRequest()
                 ]);
-
-                $this->content = $this->dashboard;
             } else {
                 if ($this->getParam('pane')) {
                     $pane = $this->getParam('pane');
                     $this->getTabs()->activate($pane);
                 }
-
-                $this->content = $this->dashboard;
             }
         }
+
+        $this->content = $this->dashboard;
     }
 
     public function homeAction()
@@ -100,19 +95,15 @@ class DashboardsController extends CompatController
                 $this->addContent(new AvailableDashlets($dashlets));
             }
         } else {
-            $panes = array_filter($activeHome->getPanes(), function ($pane) {
-                return ! $pane->getDisabled();
-            });
-
-            if (empty($panes)) {
-                $this->getTabs()->add('home', [
+            if (! $activeHome || empty($activeHome->getPanes(true))) {
+                $this->getTabs()->add($home, [
                     'active'    => true,
                     'title'     => $this->translate($this->getParam('home')),
                     'url'       => Url::fromRequest()
                 ]);
             }
 
-            if ($this->getParam('pane')) {
+            if ($activeHome && $this->getParam('pane')) {
                 $pane = $this->getParam('pane');
                 $this->dashboard->activate($pane);
             }
@@ -256,7 +247,7 @@ class DashboardsController extends CompatController
 
         $dashletForm = new DashletForm($this->dashboard);
         $dashletForm->on(DashletForm::ON_SUCCESS, function () use ($dashletForm) {
-            $this->redirectNow(Url::fromPath('dashboard/home')->addParams([
+            $this->redirectNow(Url::fromPath(DashboardHome::URL_PATH)->addParams([
                 'home'  => $dashletForm->getValue('home'),
                 'pane'  => $dashletForm->paneName,
             ]));
@@ -345,7 +336,8 @@ class DashboardsController extends CompatController
      */
     private function createTabs()
     {
-        if ($this->getParam('home')) {
+        $homeParam = $this->getParam('home');
+        if ($homeParam && $this->dashboard->hasHome($homeParam)) {
             $home = $this->dashboard->getHome($this->getParam('home'));
         } else {
             $home = $this->dashboard->rewindHomes();

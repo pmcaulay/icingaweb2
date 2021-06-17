@@ -35,6 +35,8 @@ class DashboardHome extends NavigationItem
      */
     const TAB_PARAM = 'home';
 
+    const URL_PATH = 'dashboard/home';
+
     /**
      * This home's dashboard panes
      *
@@ -199,13 +201,13 @@ class DashboardHome extends NavigationItem
     public function init()
     {
         if ($this->getName() !== self::DEFAULT_HOME && ! $this->getDisabled()) {
-            $this->setUrl(Url::fromPath('dashboard/home', [self::TAB_PARAM => $this->getName()]));
+            $this->setUrl(Url::fromPath(self::URL_PATH, [self::TAB_PARAM => $this->getName()]));
         }
 
         // Set default url to false when this home has been disabled so it
         // doesn't show up as a drop down menu under the navigation bar
         if ($this->getDisabled()) {
-            $this->setDefaultUrl(false);
+            $this->loadWithDefaultUrl(false);
         }
     }
 
@@ -233,7 +235,7 @@ class DashboardHome extends NavigationItem
                 $currentPane = $this->getPane($pane->getName());
 
                 // Check whether the user has cloned system pane w/o modifying it
-                if ($pane->getOwner() !== self::DEFAULT_IW2_USER &&  $pane->getType() === Pane::PUBLIC &&
+                if ($pane->getOwner() !== self::DEFAULT_IW2_USER &&  $pane->getType() === Pane::SYSTEM &&
                     $currentPane->getOwner() === self::DEFAULT_IW2_USER) {
                     if ($pane->getTitle() === $currentPane->getTitle() && ! $pane->hasDashlets()) {
                         // Cleaning up cloned system panes from the DB
@@ -265,9 +267,9 @@ class DashboardHome extends NavigationItem
     }
 
     /**
-     * Load system dashboards provided by all enabled modules
+     * Load system panes provided by all enabled modules which doesn't
      *
-     * that doesn't belong to any dashboard home
+     * belong to any dashboard home
      *
      * @return $this
      */
@@ -339,10 +341,9 @@ class DashboardHome extends NavigationItem
         }
 
         $dashboards = $this->getDb()->select((new Select())
-            ->columns('d.id, d.home_id, d.owner, d.name, d.label, d.source')
+            ->columns('d.*')
             ->from('dashboard d')
             ->joinLeft('dashboard_home dh', 'dh.id = d.home_id')
-            ->where(['home_id = ?' => $this->getIdentifier()])
             ->where([
                 'd.owner = ?'   => $this->user->getUsername(),
                 'dh.owner = ?'  => $this->user->getUsername()
@@ -359,7 +360,7 @@ class DashboardHome extends NavigationItem
                 ->setType($dashboard->source);
 
             $dashlets = $this->getDb()->select((new Select())
-                ->columns('ds.id, ds.dashboard_id, ds.owner, ds.name, ds.label, ds.url')
+                ->columns('ds.*')
                 ->from('dashlet ds')
                 ->joinLeft('dashboard d', 'd.id = ds.dashboard_id')
                 ->where(['ds.dashboard_id = ?'  => $pane->getPaneId()])
@@ -406,7 +407,7 @@ class DashboardHome extends NavigationItem
                     ->setOwner(self::DEFAULT_IW2_USER)
                     ->setPaneId(self::getSHA1($this->getOwner() . $this->getName() . $pane->getName()));
 
-                /** Convert array dashelts to NavigationItem */
+                /** Cast array dashelts to NavigationItem */
                 $pane->setChildren($pane->getAttribute('dashlets'));
                 $pane->setAttribute('dashlets', null);
 
@@ -456,18 +457,20 @@ class DashboardHome extends NavigationItem
     /**
      * Get this home's dashboard panes
      *
+     * @param bool $skipDisabled Whether to skip disabled panes
+     *
      * @return Pane[]
      */
-    public function getPanes($ordered = false)
+    public function getPanes($skipDisabled = false)
     {
-        if ($ordered) {
-            $panes = $this->panes;
-            ksort($panes);
-
-            return  $panes;
+        $panes = $this->panes;
+        if ($skipDisabled) {
+            $panes = array_filter($this->panes, function ($pane) {
+                return ! $pane->getDisabled();
+            });
         }
 
-        return $this->panes;
+        return $panes;
     }
 
     /**
@@ -475,7 +478,7 @@ class DashboardHome extends NavigationItem
      *
      * @param string $name The name of the pane to return
      *
-     * @return Pane        The pane or null if no pane with the given name exists
+     * @return Pane
      * @throws ProgrammingError
      */
     public function getPane($name)
@@ -498,7 +501,7 @@ class DashboardHome extends NavigationItem
     private function updatePaneData(Pane $pane)
     {
         // Check whether the pane is a system or cloned pane
-        if ($pane->getOwner() === self::DEFAULT_IW2_USER || $pane->getType() === Pane::PUBLIC) {
+        if ($pane->getOwner() === self::DEFAULT_IW2_USER || $pane->getType() === Pane::SYSTEM) {
             $paneId = self::getSHA1($this->user->getUsername() . $this->getName() . $pane->getName());
             $overridingPane = $this->getDb()->select((new Select())
                 ->columns('*')
@@ -534,8 +537,8 @@ class DashboardHome extends NavigationItem
         /** @var Dashlet $dashlet */
         foreach ($pane->getDashlets() as $dashlet) {
             if (! $dashlet->isUserWidget()) {
-                // Since the system dashlet ids are bein modified when writing them into the
-                // DB, we have to regenerate the ids here as well.
+                // Since the system dashlet ids are being modified when writing them into the
+                // DB, we have to regenerate them here as well.
                 $dashletId = self::getSHA1(
                     $this->user->getUsername() . $this->getName() . $pane->getName() . $dashlet->getName()
                 );
@@ -641,6 +644,13 @@ class DashboardHome extends NavigationItem
     public function removePane($pane)
     {
         if (! $pane instanceof Pane) {
+            if (! $this->hasPane($pane)) {
+                throw new ProgrammingError(
+                    'Trying to remove invalid dashboard pane "%s"',
+                    $pane
+                );
+            }
+
             $pane = $this->getPane($pane);
         }
 

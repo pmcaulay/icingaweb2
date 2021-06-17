@@ -634,7 +634,7 @@ class NavigationItem implements IteratorAggregate
      *
      * @return $this
      */
-    public function setDefaultUrl($value)
+    public function loadWithDefaultUrl($value)
     {
         $this->defaultUrl = $value;
 

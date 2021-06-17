@@ -163,6 +163,7 @@ class Menu extends Navigation
     protected function loadDashboardHomes()
     {
         $user = Auth::getInstance()->getUser();
+        $dashboardItem = $this->getItem('dashboard');
         $homesFromDb = [];
 
         $dashboardHomes = $this->getDb()->select((new Select())
@@ -184,7 +185,7 @@ class Menu extends Navigation
                 'disabled'      => (bool) $dashboardHome->disabled,
             ]);
 
-            $this->getItem('dashboard')->addChild($home);
+            $dashboardItem->addChild($home);
 
             $priority += 10;
             $homesFromDb[$home->getName()] = $home;
@@ -248,7 +249,7 @@ class Menu extends Navigation
                 ->setChildren([])
                 ->setIdentifier(++$highestId->highestId);
 
-            $this->getItem('dashboard')->addChild($home);
+            $dashboardItem->addChild($home);
         }
     }
 }

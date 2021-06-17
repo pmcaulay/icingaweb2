@@ -50,7 +50,7 @@ class DashletForm extends CompatForm
     {
         if (! property_exists($this, $name)) {
             $class = get_class($this);
-            $message = "Call to undefined property $class::$name";
+            $message = "Access to undefined property $class::$name";
 
             throw new InvalidPropertyException($message);
         }
@@ -338,7 +338,7 @@ class DashletForm extends CompatForm
                 $paneLabel = $tmpPane->getTitle();
 
                 if ($tmpPane->getOwner() === DashboardHome::DEFAULT_IW2_USER) {
-                    $type = Pane::PUBLIC;
+                    $type = Pane::SYSTEM;
                 }
             }
 
@@ -486,7 +486,7 @@ class DashletForm extends CompatForm
 
                 if (! $createNewPane) {
                     $paneLabel = $activeHome->getPane($paneName)->getTitle();
-                    $source = Pane::PUBLIC;
+                    $source = Pane::SYSTEM;
                 }
 
                 $db->insert('dashboard', [
