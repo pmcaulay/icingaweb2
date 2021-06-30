@@ -4,6 +4,57 @@ Please make sure to always read our [Upgrading](doc/80-Upgrading.md) documentati
 
 ## What's New
 
+### What's New in Version 2.9.0
+
+You can find all issues related to this release on our [Roadmap](https://github.com/Icinga/icingaweb2/milestone/59?closed=1).
+
+Please make sure to also check the respective [upgrading section](https://icinga.com/docs/icinga-web-2/latest/doc/80-Upgrading/#upgrading-to-icinga-web-2-29x)
+in the documentation.
+
+#### Icinga DB
+
+We continue our endeavour soon. Icinga Web 2 is still a crucial part of it and this update is again required
+for Icinga DB. If you like to participate again, don't forget to update Icinga Web 2 as well.
+
+#### RBAC, The Elephant In Icinga Web 2
+
+Role Based Access Control, for the non-initiated. I'll make it short: Permission refusals, Role inheritance,
+Privilege Audit. Icinga DB will also solve the long-standing issue [#2455](https://github.com/Icinga/icingaweb2/issues/2455)
+and also allows [#3349](https://github.com/Icinga/icingaweb2/issues/3349) and [#3550](https://github.com/Icinga/icingaweb2/issues/3550).
+I've also written a blog post about this very topic: https://icinga.com/blog/2021/04/07/web-access-control-redefined/
+
+* Authorization enhancements [#4306](https://github.com/Icinga/icingaweb2/pull/4306)
+* Audit View [#4336](https://github.com/Icinga/icingaweb2/pull/4336)
+* Highlight modules with permissions set inside a role [#4241](https://github.com/Icinga/icingaweb2/issues/4241)
+
+#### Support for PHP 8
+
+PHP 8 is released and with Icinga Web 2.9 it will now (hopefully) work flawlessly. We also took the chance
+to prepare to drop the support of some legacy PHP versions. We now require PHP 7.3 at a minimum and all
+versions below that will not be supported anymore with the release of v2.11.
+
+* Support PHP 8 [#4289](https://github.com/Icinga/icingaweb2/pull/4289)
+* Raise minimum required PHP version to 7.3 [#4397](https://github.com/Icinga/icingaweb2/pull/4397)
+
+#### Stay, Be Remembered
+
+Have you ever been disappointed that Icinga Web 2 always forgets you after closing your browser? This is in
+your hands now! Just tick the new checkbox on the login screen and Icinga Web 2 doesn't forget your presence
+anymore. Unless of course the administrator or you on a different device clears your session.
+
+* Implement a "remember me" feature [#2495](https://github.com/Icinga/icingaweb2/issues/2495)
+
+#### It Does Matter, When
+
+Browsers are bad when it's about date and time inputs. (I'm looking at you Mozilla!) Now we've given our hopes
+up and use a specifically invented solution to show you a date and time picker throughout every browser. With
+Icinga v2.13 onwards you will also be able to use this when defining an expiry date for comments! Though, you
+might not necessarily use it that often once you've configured new custom defaults for downtime endings.
+
+* Add datetime picker widget [#4354](https://github.com/Icinga/icingaweb2/pull/4354)
+* Expire Option for Comments [#3447](https://github.com/Icinga/icingaweb2/issues/3447)
+* Custom defaults for downtime end, comment and duration [#4364](https://github.com/Icinga/icingaweb2/issues/4364)
+
 ### What's New in Version 2.8.2
 
 **Notice**: This is a security release. It is recommended to immediately upgrade to this release.
